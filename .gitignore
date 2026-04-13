@@ -2,6 +2,7 @@
 *.env
 application-prod.properties
 application-local.properties
+dist/
 frontend/dist/
 frontend/node_modules/
 .idea/
