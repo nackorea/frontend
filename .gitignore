@@ -1,0 +1,10 @@
+.env
+*.env
+application-prod.properties
+application-local.properties
+backend/target/
+frontend/dist/
+frontend/node_modules/
+.idea/
+*.iml
+.DS_Store
