@@ -503,6 +503,8 @@ const products = {
     const [form, setForm] = useState({ name: "", phone: "", email: "", password: "", password2: "" });
     const [errs, setErrs] = useState({});
     const [done, setDone] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [toast, setToast] = useState("");
 
     const validate = () => {
       const e = {};
@@ -519,10 +521,38 @@ const products = {
       return e;
     };
 
-    const submit = () => {
+    const submit = async () => {
       const e = validate();
       if (Object.keys(e).length) { setErrs(e); return; }
-      setDone(true);
+      
+      setLoading(true);
+      setToast("");
+      
+      try {
+        const res = await fetch("http://localhost:8080/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+            name: form.name,
+            phone: form.phone
+          })
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || "회원가입 실패");
+        }
+        
+        setDone(true);
+        setToast("회원가입이 완료되었습니다!");
+      } catch (error) {
+        console.error("회원가입 실패:", error);
+        setToast(error.message || "회원가입 중 오류가 발생했습니다");
+      } finally {
+        setLoading(false);
+      }
     };
 
     return (
@@ -561,13 +591,13 @@ const products = {
                 {errs[f.k] && <p style={{ color:"#d44", fontSize:12, marginTop:5 }}>{errs[f.k]}</p>}
               </div>
             ))}
-            {/* 비밀번호 입력 필드 (type=text) */}
+            {/* 비밀번호 입력 필드 */}
             <div style={{ marginBottom:22 }}>
               <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>
                 비밀번호 <span style={{ color:"#d44" }}>*</span>
               </label>
               <input
-                type="text"
+                type="password"
                 name="password"
                 placeholder="비밀번호 (8자 이상)"
                 value={form.password}
@@ -579,13 +609,13 @@ const products = {
               />
               {errs.password && <p style={{ color:"#d44", fontSize:12, marginTop:5 }}>{errs.password}</p>}
             </div>
-            {/* 비밀번호 확인 입력 필드 (type=text) */}
+            {/* 비밀번호 확인 입력 필드 */}
             <div style={{ marginBottom:22 }}>
               <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>
                 비밀번호 확인 <span style={{ color:"#d44" }}>*</span>
               </label>
               <input
-                type="text"
+                type="password"
                 name="password2"
                 placeholder="비밀번호 확인 (8자 이상)"
                 value={form.password2}
@@ -603,7 +633,8 @@ const products = {
             <div style={{ background:"#fff8ec", border:`1px solid ${GOLD}44`, borderRadius:8, padding:14, marginBottom:22, fontSize:13, color:"#886" }}>
               💳 추후 카드 결제 시스템 연동 예정 — 구매 편의성을 높여드리겠습니다.
             </div>
-            <button onClick={submit} style={{ width:"100%", background:G, border:"none", color:"white", padding:"14px", borderRadius:8, fontSize:16, fontWeight:"bold", cursor:"pointer" }}>회원가입</button>
+            <button onClick={submit} disabled={loading} style={{ width:"100%", background:G, border:"none", color:"white", padding:"14px", borderRadius:8, fontSize:16, fontWeight:"bold", cursor:"pointer", opacity:loading?0.7:1 }}>회원가입</button>
+            <Toast message={toast} onDone={() => setToast("")} />
           </div>
         )}
       </div>
