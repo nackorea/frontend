@@ -102,6 +102,7 @@ function App() {
 
 
 const G = "#1a5f30", GL = "#227a3e", GD = "#124522", GOLD = "#d4880a", BG = "#f3f8f0";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const products = {
   pig: {
     icon: "🐷", title: "돼지 전용 사료 첨가제", col: "#c0570a",
@@ -529,7 +530,7 @@ const products = {
       setToast("");
       
       try {
-        const res = await fetch("http://localhost:8080/api/auth/register", {
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
