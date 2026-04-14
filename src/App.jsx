@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ChevronDown, MapPin, Phone, Mail, CheckCircle } from "lucide-react";
+import axios from "axios";
 
 function Toast({ message, onDone }) {
   useEffect(() => {
@@ -54,7 +55,7 @@ function App() {
       setToast("");
       console.log("로그인 시도:", form); // 디버그용 알림
       try {
-        const res = await fetch("http://localhost:3030/api/auth/login", {
+        const res = await fetch("http://localhost:8080/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: form.email, password: form.password })
@@ -177,8 +178,7 @@ const products = {
       return;
     }
     try {
-      const axios = (await import("axios")).default;
-      const res = await axios.post("http://localhost:3030/api/auth/logout", {}, {
+      const res = await axios.post("http://localhost:8080/api/auth/logout", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 200) {
