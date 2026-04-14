@@ -37,6 +37,7 @@ function App() {
     const [form, setForm] = useState({ email: "", password: "" });
     const [toast, setToast] = useState("");
     const [loading, setLoading] = useState(false);
+    const [serverCheckLoading, setServerCheckLoading] = useState(false);
 
     // 로그인 상태면 바로 홈으로 이동
     if (isLogin) {
@@ -78,6 +79,23 @@ function App() {
       }
     };
 
+    const handleServerCheck = async () => {
+      setServerCheckLoading(true);
+      setToast("");
+      try {
+        const res = await fetch("http://127.0.0.1:8080/api/health/detail");
+        if (!res.ok) throw new Error(`서버 응답: ${res.status}`);
+        const data = await res.json();
+        console.log("서버 상태:", data);
+        setToast("서버 연결 성공!");
+      } catch (e) {
+        console.error("서버 체크 실패:", e);
+        setToast("서버 연결 실패: " + e.message);
+      } finally {
+        setServerCheckLoading(false);
+      }
+    };
+
     return (
       <div style={{ maxWidth:400, margin:"0 auto", padding:"60px 20px" }}>
         <h1 style={{ fontSize:30, color:G, fontWeight:"bold", marginBottom:6 }}>로그인</h1>
@@ -92,6 +110,9 @@ function App() {
             <input type="password" name="password" value={form.password} onChange={handleChange} required style={{ width:"100%", padding:"11px 14px", border:`1.5px solid #ddd`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }} />
           </div>
           <button type="submit" disabled={loading} style={{ width:"100%", background:G, border:"none", color:"white", padding:"14px", borderRadius:8, fontSize:16, fontWeight:"bold", cursor:"pointer", opacity:loading?0.7:1 }}>로그인</button>
+          <button type="button" onClick={handleServerCheck} disabled={serverCheckLoading} style={{ width:"100%", background:"#f0f0f0", border:"1px solid #ddd", color:"#333", padding:"12px", borderRadius:8, fontSize:14, fontWeight:"500", cursor:"pointer", marginTop:12, opacity:serverCheckLoading?0.7:1 }}>
+            {serverCheckLoading ? "서버 체크 중..." : "서버 상태 확인"}
+          </button>
         </form>
         <Toast message={toast} onDone={() => {
           setToast("");
