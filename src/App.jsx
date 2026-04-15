@@ -235,6 +235,7 @@ const products = {
                 <div>
                   <div style={{ color:"white", fontWeight:"bold", fontSize:17, lineHeight:1.1 }}>NAC KOREA</div>
                   <div style={{ color:GOLD, fontSize:9, letterSpacing:2 }}>FEED ADDITIVES</div>
+                  {/* <div style={{ color:GOLD, fontSize:9, letterSpacing:2 }}>Nutrition Assistant Companions</div> */}
                 </div>
               </div>
             </div>
