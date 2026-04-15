@@ -7,6 +7,29 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 
+// JWT payload의 exp 필드로 토큰 만료 여부 검사
+// 만료됐거나 형식이 잘못된 토큰은 false 반환
+function isTokenValid(token) {
+  if (!token) return false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // exp는 초 단위 Unix timestamp
+    return payload.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+// localStorage의 토큰을 검사하고, 만료된 경우 즉시 제거 후 null 반환
+function getValidToken() {
+  const t = localStorage.getItem("token");
+  if (isTokenValid(t)) return t;
+  // 만료 토큰 제거
+  localStorage.removeItem("token");
+  localStorage.removeItem("role");
+  return null;
+}
+
 // Header는 자체 메뉴 상태(mob/dd/mobSub)를 소유 — App 리렌더와 독립적으로 동작
 function Header({ nav, currentPage, onNavigate, onLogout }) {
   const [mob, setMob] = useState(false);
@@ -130,9 +153,10 @@ function Header({ nav, currentPage, onNavigate, onLogout }) {
 
 function App() {
   const [page, setPage] = useState("home");
-  // 로그인 상태 및 토큰 관리 (lazy init: 새로고침 시에도 localStorage에서 즉시 복원)
-  const [isLogin, setIsLogin] = useState(() => !!localStorage.getItem("token"));
-  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  // 로그인 상태 및 토큰 관리
+  // getValidToken: 만료된 토큰은 localStorage에서 제거하고 null 반환
+  const [token, setToken] = useState(() => getValidToken() ?? "");
+  const [isLogin, setIsLogin] = useState(() => !!getValidToken());
 
   const go = (p) => setPage(p);
 
