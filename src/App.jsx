@@ -1,177 +1,149 @@
-import { useState, useEffect } from "react";
-import { Menu, X, ChevronDown, MapPin, Phone, Mail, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { Menu, X, ChevronDown, MapPin, Phone } from "lucide-react";
 import axios from "axios";
+import { G, GL, GD, GOLD, BG, API_BASE } from "./constants/theme";
+import { products } from "./constants/products";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfilePage from "./pages/ProfilePage";
 
-function Toast({ message, onDone }) {
-  useEffect(() => {
-    if (!message) return;
-    const t = setTimeout(() => {
-      if (onDone) onDone();
-    }, 1000);
-    return () => clearTimeout(t);
-  }, [message, onDone]);
-  if (!message) return null;
+// Header는 자체 메뉴 상태(mob/dd/mobSub)를 소유 — App 리렌더와 독립적으로 동작
+function Header({ nav, currentPage, onNavigate, onLogout }) {
+  const [mob, setMob] = useState(false);
+  const [dd, setDd] = useState(null);
+  const [mobSub, setMobSub] = useState(null);
+  const isAdmin = typeof window !== "undefined" && localStorage.getItem("role") === "ADMIN";
+
+  const btnStyle = (active) => ({
+    background: "none", border: "none",
+    color: active ? GOLD : "rgba(255,255,255,0.9)",
+    padding: "8px 14px", borderRadius: 6, cursor: "pointer", fontSize: 14, fontWeight: "500",
+  });
+
+  // 메뉴 닫고 이동
+  const handleNavClick = (pageId) => {
+    setMob(false); setDd(null); setMobSub(null);
+    onNavigate(pageId);
+  };
+
+  const subBtnStyleDesktop = {
+    display: "block", width: "100%", padding: "11px 18px",
+    background: "none", border: "none", borderBottom: "0.5px solid #eee",
+    cursor: "pointer", textAlign: "left", fontSize: 14, color: "#222",
+  };
+  const subBtnStyleMobile = {
+    width: "100%", background: "none", border: "none",
+    color: "rgba(255,255,255,0.75)", padding: "11px 20px 11px 36px",
+    textAlign: "left", cursor: "pointer", fontSize: 14, display: "block",
+    borderBottom: "0.5px solid rgba(255,255,255,0.05)",
+  };
+
   return (
-    <div style={{
-      position: "fixed", bottom: 60, left: "50%", transform: "translateX(-50%)",
-      background: "#222", color: "#fff", padding: "22px 60px", borderRadius: 14,
-      fontSize: 18, zIndex: 9999, boxShadow: "0 4px 32px #0005", minWidth: 320, textAlign: "center", fontWeight: 600
-    }}>
-      {message}
-    </div>
+    <header style={{ background: G, position: "sticky", top: 0, zIndex: 1000, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
+          <div onClick={() => handleNavClick("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 38, height: 38, background: GOLD, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12, color: G, letterSpacing: -0.5 }}>NAC</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div>
+                <div style={{ color: "white", fontWeight: "bold", fontSize: 17, lineHeight: 1.1 }}>NAC KOREA</div>
+                <div style={{ color: GOLD, fontSize: 9, letterSpacing: 2 }}>FEED ADDITIVES</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <nav style={{ display: "flex", alignItems: "center", gap: 4 }} className="dsk">
+          {nav.map(item => (
+            <div key={item.id} style={{ position: "relative" }}
+              onMouseEnter={() => item.sub && setDd(item.id)}
+              onMouseLeave={() => setDd(null)}>
+              {item.sub ? (
+                <>
+                  <button style={btnStyle(false)}>{item.label} <ChevronDown size={13} style={{ display: "inline", verticalAlign: "middle" }} /></button>
+                  {dd === item.id && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, background: "white", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", minWidth: 170, zIndex: 200, overflow: "hidden" }}>
+                      {item.sub.map(s => (
+                        s.id === "logout"
+                          ? <button key={s.id} onClick={onLogout} style={subBtnStyleDesktop}
+                              onMouseEnter={e => e.target.style.background = "#f0f7ec"}
+                              onMouseLeave={e => e.target.style.background = "none"}>{s.label}</button>
+                          : <button key={s.id} onClick={() => handleNavClick(s.id)} style={subBtnStyleDesktop}
+                              onMouseEnter={e => e.target.style.background = "#f0f7ec"}
+                              onMouseLeave={e => e.target.style.background = "none"}>{s.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button onClick={() => handleNavClick(item.id)} style={btnStyle(currentPage === item.id)}>{item.label}</button>
+              )}
+            </div>
+          ))}
+          {isAdmin && (
+            <span style={{ background: "#d4880a", color: "#fff", fontWeight: "bold", fontSize: 11, borderRadius: 6, padding: "2px 10px", marginLeft: 14, letterSpacing: 1, display: "inline-block" }}>ADMIN</span>
+          )}
+        </nav>
+        <button onClick={() => setMob(!mob)} className="ham"
+          style={{ background: "none", border: "none", color: "white", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" }}>
+          {mob ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+      {mob && (
+        <div style={{ background: GD, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          {nav.map(item => (
+            <div key={item.id}>
+              {item.sub ? (
+                <>
+                  <button onClick={() => setMobSub(mobSub === item.id ? null : item.id)}
+                    style={{ width: "100%", background: "none", border: "none", color: "rgba(255,255,255,0.9)", padding: "14px 20px", textAlign: "left", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 15, borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+                    {item.label}
+                    <ChevronDown size={15} style={{ transform: mobSub === item.id ? "rotate(180deg)" : "none", transition: "0.2s" }} />
+                  </button>
+                  {mobSub === item.id && (
+                    <div style={{ background: "rgba(0,0,0,0.18)" }}>
+                      {item.sub.map(s => (
+                        s.id === "logout"
+                          ? <button key={s.id} onClick={onLogout} style={subBtnStyleMobile}>{s.label}</button>
+                          : <button key={s.id} onClick={() => handleNavClick(s.id)} style={subBtnStyleMobile}>{s.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button onClick={() => handleNavClick(item.id)}
+                  style={{ width: "100%", background: "none", border: "none", color: currentPage === item.id ? GOLD : "rgba(255,255,255,0.9)", padding: "14px 20px", textAlign: "left", cursor: "pointer", fontSize: 15, borderBottom: "0.5px solid rgba(255,255,255,0.07)" }}>
+                  {item.label}
+                </button>
+              )}
+            </div>
+          ))}
+          {isAdmin && (
+            <div style={{ padding: "10px 20px" }}>
+              <span style={{ background: "#d4880a", color: "#fff", fontWeight: "bold", fontSize: 11, borderRadius: 6, padding: "2px 10px", letterSpacing: 1, display: "inline-block" }}>ADMIN</span>
+            </div>
+          )}
+        </div>
+      )}
+    </header>
   );
 }
 
 function App() {
-  // 회원정보수정(프로필) 페이지 더미
-  const ProfilePage = () => (
-    <div style={{ maxWidth:500, margin:"0 auto", padding:"60px 20px" }}>
-      <h1 style={{ fontSize:30, color:G, fontWeight:"bold", marginBottom:6 }}>회원정보 수정</h1>
-      <div style={{ width:56, height:4, background:GOLD, marginBottom:24, borderRadius:2 }}/>
-      <div style={{ background:"white", borderRadius:16, padding:32, boxShadow:"0 2px 20px rgba(0,0,0,0.07)" }}>
-        <p style={{ color:"#666", fontSize:15, textAlign:"center" }}>회원정보 수정 페이지 (구현 필요)</p>
-      </div>
-    </div>
-  );
-  const LoginPage = () => {
-    const [form, setForm] = useState({ email: "", password: "" });
-    const [toast, setToast] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [serverCheckLoading, setServerCheckLoading] = useState(false);
-
-    // 로그인 상태면 바로 홈으로 이동
-    if (isLogin) {
-      go("home");
-      return null;
-    }
-
-    const handleChange = e => {
-      const { name, value } = e.target;
-      setForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleLogin = async e => {
-      e.preventDefault();
-      setLoading(true);
-      setToast("");
-      console.log("로그인 시도:", form); // 디버그용 알림
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password })
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        console.log("권한:", data.member.role); // 디버그용 알림
-        if (data.accessToken) {
-          localStorage.setItem("token", data.accessToken);
-          localStorage.setItem("role", data.member.role);
-          setToken(data.accessToken);
-          setIsLogin(true);
-        }
-        setToast("로그인 성공!");
-      } catch (e) {
-        console.error("로그인 실패:", e); // 디버그용 알림
-        setToast("이메일 또는 비밀번호를 확인하세요.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const handleServerCheck = async () => {
-      setServerCheckLoading(true);
-      setToast("");
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/health/detail`);
-        if (!res.ok) throw new Error(`서버 응답: ${res.status}`);
-        const data = await res.json();
-        console.log("서버 상태:", data);
-        setToast("서버 연결 성공!");
-      } catch (e) {
-        console.error("서버 체크 실패:", e);
-        setToast("서버 연결 실패: " + e.message);
-      } finally {
-        setServerCheckLoading(false);
-      }
-    };
-
-    return (
-      <div style={{ maxWidth:400, margin:"0 auto", padding:"60px 20px" }}>
-        <h1 style={{ fontSize:30, color:G, fontWeight:"bold", marginBottom:6 }}>로그인</h1>
-        <div style={{ width:56, height:4, background:GOLD, marginBottom:24, borderRadius:2 }}/>
-        <form onSubmit={handleLogin} style={{ background:"white", borderRadius:16, padding:32, boxShadow:"0 2px 20px rgba(0,0,0,0.07)" }}>
-          <div style={{ marginBottom:22 }}>
-            <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>이메일</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required style={{ width:"100%", padding:"11px 14px", border:`1.5px solid #ddd`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }} />
-          </div>
-          <div style={{ marginBottom:22 }}>
-            <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>비밀번호</label>
-            <input type="password" name="password" value={form.password} onChange={handleChange} required style={{ width:"100%", padding:"11px 14px", border:`1.5px solid #ddd`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }} />
-          </div>
-          <button type="submit" disabled={loading} style={{ width:"100%", background:G, border:"none", color:"white", padding:"14px", borderRadius:8, fontSize:16, fontWeight:"bold", cursor:"pointer", opacity:loading?0.7:1 }}>로그인</button>
-          <button type="button" onClick={handleServerCheck} disabled={serverCheckLoading} style={{ width:"100%", background:"#f0f0f0", border:"1px solid #ddd", color:"#333", padding:"12px", borderRadius:8, fontSize:14, fontWeight:"500", cursor:"pointer", marginTop:12, opacity:serverCheckLoading?0.7:1 }}>
-            {serverCheckLoading ? "서버 체크 중..." : "서버 상태 확인"}
-          </button>
-        </form>
-        <Toast message={toast} onDone={() => {
-          setToast("");
-        }} />
-      </div>
-    );
-  };
-
-
-const G = "#1a5f30", GL = "#227a3e", GD = "#124522", GOLD = "#d4880a", BG = "#f3f8f0";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-const products = {
-  pig: {
-    icon: "🐷", title: "돼지 전용 사료 첨가제", col: "#c0570a",
-    list: [
-      { name: "NAC-돈 프로바이오틱스 골드", code: "NAC-PG-001", desc: "장내 유익균 증식으로 소화율 향상 및 면역력 강화 전문 복합 사료 첨가제", tags: ["소화율 20%↑","FCR 개선","폐사율 감소","항생제 대체"], use: "사료 1톤당 500g" },
-      { name: "NAC-돈 미네랄 콤플렉스", code: "NAC-PM-002", desc: "필수 미네랄 복합체로 성장 촉진 및 골격 형성을 최적화하는 첨가제", tags: ["성장 촉진","골격 강화","번식성적 향상","빈혈 예방"], use: "사료 1톤당 1kg" },
-      { name: "NAC-돈 항산화 포뮬라", code: "NAC-PA-003", desc: "천연 항산화 성분으로 스트레스 감소 및 육질을 개선하는 프리미엄 제품", tags: ["스트레스 감소","육질 개선","항산화 효과","면역 증진"], use: "사료 1톤당 300g" },
-    ]
-  },
-  cattle: {
-    icon: "🐄", title: "소 전용 사료 첨가제", col: "#6d3a1f",
-    list: [
-      { name: "NAC-한우 프리미엄 플러스", code: "NAC-CP-001", desc: "한우 전용 고급 첨가제로 마블링 향상 및 육질 등급 개선에 탁월한 효과", tags: ["마블링 향상","육질 등급↑","성장률 향상","사료 이용률↑"], use: "사료 1톤당 800g" },
-      { name: "NAC-젖소 밀크 부스터", code: "NAC-CM-002", desc: "착유량 증가 및 유질 개선을 위한 젖소 전용 특수 사료 첨가제", tags: ["착유량 15%↑","유지방 개선","체세포수 감소","번식성적↑"], use: "두당 일 50g" },
-      { name: "NAC-소 루멘 액티브", code: "NAC-CR-003", desc: "반추위 기능 강화로 사료 이용률을 극대화하는 반추위 전용 첨가제", tags: ["반추위 활성화","가스 발생↓","체중 증가","소화 효율↑"], use: "사료 1톤당 600g" },
-    ]
-  },
-  chicken: {
-    icon: "🐔", title: "닭 전용 사료 첨가제", col: "#b54500",
-    list: [
-      { name: "NAC-브로일러 그로스 터보", code: "NAC-BP-001", desc: "육계 전용 초고속 성장 촉진 및 면역 강화 복합 사료 첨가제", tags: ["성장속도 25%↑","균일도 개선","면역 강화","출하일 단축"], use: "사료 1톤당 400g" },
-      { name: "NAC-산란계 에그 슈퍼", code: "NAC-LE-002", desc: "산란율 향상 및 난각 강도 개선을 위한 산란계 전용 첨가제", tags: ["산란율 5%↑","난각 강도↑","난황색 개선","산란 연장"], use: "사료 1톤당 500g" },
-      { name: "NAC-닭 인테스틴 케어", code: "NAC-IC-003", desc: "장 건강 증진으로 사료 효율 및 전체 생산성을 향상시키는 첨가제", tags: ["장 건강 개선","사료 효율↑","암모니아↓","폐사율 감소"], use: "사료 1톤당 300g" },
-    ]
-  }
-};
-
   const [page, setPage] = useState("home");
-  const [mob, setMob] = useState(false);
-  const [dd, setDd] = useState(null);
-  const [mobSub, setMobSub] = useState(null);
-  // 로그인 상태 및 토큰 관리
-  const [isLogin, setIsLogin] = useState(false);
-  const [token, setToken] = useState("");
+  // 로그인 상태 및 토큰 관리 (lazy init: 새로고침 시에도 localStorage에서 즉시 복원)
+  const [isLogin, setIsLogin] = useState(() => !!localStorage.getItem("token"));
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
 
-  const go = (p) => { setPage(p); setMob(false); setDd(null); setMobSub(null); };
+  const go = (p) => setPage(p);
 
-  // 최초 진입 시 localStorage에서 토큰 확인
-  useEffect(() => {
-    const t = localStorage.getItem("token");
-    if (t) {
-      setToken(t);
-      setIsLogin(true);
-    } else {
-      setToken("");
-      setIsLogin(false);
-    }
-  }, []);
+  // 로그인 성공 콜백 — LoginPage에서 호출
+  const onLoginSuccess = (accessToken, role) => {
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("role", role);
+    setToken(accessToken);
+    setIsLogin(true);
+    go("home");
+  };
 
   // 동적 네비게이션
   const nav = [
@@ -219,135 +191,6 @@ const products = {
   };
 
 
-
-  const S = { btn: (active) => ({ background:"none", border:"none", color: active ? GOLD : "rgba(255,255,255,0.9)", padding:"8px 14px", borderRadius:6, cursor:"pointer", fontSize:14, fontWeight:"500" }) };
-
-  const Header = () => {
-    // role이 ADMIN이면 admin 뱃지 노출
-    const isAdmin = typeof window !== "undefined" && localStorage.getItem("role") === "ADMIN";
-    return (
-      <header style={{ background:G, position:"sticky", top:0, zIndex:1000, boxShadow:"0 2px 8px rgba(0,0,0,0.25)" }}>
-        <div style={{ maxWidth:1200, margin:"0 auto", padding:"0 20px", height:64, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", flex:1 }}>
-            <div onClick={() => go("home")} style={{ cursor:"pointer", display:"flex", alignItems:"center", gap:10 }}>
-              <div style={{ width:38, height:38, background:GOLD, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:12, color:G, letterSpacing:-0.5 }}>NAC</div>
-              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <div>
-                  <div style={{ color:"white", fontWeight:"bold", fontSize:17, lineHeight:1.1 }}>NAC KOREA</div>
-                  <div style={{ color:GOLD, fontSize:9, letterSpacing:2 }}>FEED ADDITIVES</div>
-                  {/* <div style={{ color:GOLD, fontSize:9, letterSpacing:2 }}>Nutrition Assistant Companions</div> */}
-                </div>
-              </div>
-            </div>
-          </div>
-          <nav style={{ display:"flex", alignItems:"center", gap:4 }} className="dsk">
-            {nav.map(item => (
-              <div key={item.id} style={{ position:"relative" }}
-                onMouseEnter={() => item.sub && setDd(item.id)}
-                onMouseLeave={() => setDd(null)}>
-                {item.sub ? (
-                  <>
-                    <button style={S.btn(false)}>{item.label} <ChevronDown size={13} style={{ display:"inline", verticalAlign:"middle" }}/></button>
-                    {dd === item.id && (
-                      <div style={{ position:"absolute", top:"100%", left:0, background:"white", borderRadius:8, boxShadow:"0 8px 24px rgba(0,0,0,0.15)", minWidth:170, zIndex:200, overflow:"hidden" }}>
-                        {item.sub.map(s => (
-                          s.id === "logout"
-                            ? <button key={s.id} onClick={handleLogout}
-                                style={{ display:"block", width:"100%", padding:"11px 18px", background:"none", border:"none", borderBottom:"0.5px solid #eee", cursor:"pointer", textAlign:"left", fontSize:14, color:"#222" }}
-                                onMouseEnter={e => e.target.style.background="#f0f7ec"}
-                                onMouseLeave={e => e.target.style.background="none"}>
-                                {s.label}
-                              </button>
-                            : <button key={s.id} onClick={() => go(s.id)}
-                                style={{ display:"block", width:"100%", padding:"11px 18px", background:"none", border:"none", borderBottom:"0.5px solid #eee", cursor:"pointer", textAlign:"left", fontSize:14, color:"#222" }}
-                                onMouseEnter={e => e.target.style.background="#f0f7ec"}
-                                onMouseLeave={e => e.target.style.background="none"}>
-                                {s.label}
-                              </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <button onClick={() => go(item.id)} style={S.btn(page === item.id)}>{item.label}</button>
-                )}
-              </div>
-            ))}
-            {/* ADMIN 뱃지 우측 메뉴 옆에 노출 */}
-            {isAdmin && (
-              <span style={{
-                background: "#d4880a",
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 11,
-                borderRadius: 6,
-                padding: "2px 10px",
-                marginLeft: 14,
-                letterSpacing: 1,
-                display: "inline-block"
-              }}>ADMIN</span>
-            )}
-          </nav>
-          <button onClick={() => setMob(!mob)} className="ham"
-            style={{ background:"none", border:"none", color:"white", cursor:"pointer", padding:8, display:"flex", alignItems:"center" }}>
-            {mob ? <X size={24}/> : <Menu size={24}/>}
-          </button>
-        </div>
-        {mob && (
-          <div style={{ background:GD, borderTop:"1px solid rgba(255,255,255,0.08)" }}>
-            {nav.map(item => (
-              <div key={item.id}>
-                {item.sub ? (
-                  <>
-                    <button onClick={() => setMobSub(mobSub === item.id ? null : item.id)}
-                      style={{ width:"100%", background:"none", border:"none", color:"rgba(255,255,255,0.9)", padding:"14px 20px", textAlign:"left", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", fontSize:15, borderBottom:"0.5px solid rgba(255,255,255,0.07)" }}>
-                      {item.label}
-                      <ChevronDown size={15} style={{ transform: mobSub===item.id?"rotate(180deg)":"none", transition:"0.2s" }}/>
-                    </button>
-                    {mobSub === item.id && (
-                      <div style={{ background:"rgba(0,0,0,0.18)" }}>
-                        {item.sub.map(s => (
-                          s.id === "logout"
-                            ? <button key={s.id} onClick={handleLogout}
-                                style={{ width:"100%", background:"none", border:"none", color:"rgba(255,255,255,0.75)", padding:"11px 20px 11px 36px", textAlign:"left", cursor:"pointer", fontSize:14, display:"block", borderBottom:"0.5px solid rgba(255,255,255,0.05)" }}>
-                                {s.label}
-                              </button>
-                            : <button key={s.id} onClick={() => go(s.id)}
-                                style={{ width:"100%", background:"none", border:"none", color:"rgba(255,255,255,0.75)", padding:"11px 20px 11px 36px", textAlign:"left", cursor:"pointer", fontSize:14, display:"block", borderBottom:"0.5px solid rgba(255,255,255,0.05)" }}>
-                                {s.label}
-                              </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <button onClick={() => go(item.id)}
-                    style={{ width:"100%", background:"none", border:"none", color: page===item.id ? GOLD : "rgba(255,255,255,0.9)", padding:"14px 20px", textAlign:"left", cursor:"pointer", fontSize:15, borderBottom:"0.5px solid rgba(255,255,255,0.07)" }}>
-                    {item.label}
-                  </button>
-                )}
-              </div>
-            ))}
-            {/* 모바일 메뉴에서도 ADMIN 뱃지 노출 */}
-            {isAdmin && (
-              <div style={{ padding: "10px 20px 10px 20px" }}>
-                <span style={{
-                  background: "#d4880a",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: 11,
-                  borderRadius: 6,
-                  padding: "2px 10px",
-                  letterSpacing: 1,
-                  display: "inline-block"
-                }}>ADMIN</span>
-              </div>
-            )}
-          </div>
-        )}
-      </header>
-    );
-  };
 
   const HomePage = () => (
     <div>
@@ -522,154 +365,12 @@ const products = {
     );
   };
 
-  const RegisterPage = () => {
-    const [form, setForm] = useState({ name: "", phone: "", email: "", password: "", password2: "" });
-    const [errs, setErrs] = useState({});
-    const [done, setDone] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [toast, setToast] = useState("");
-
-    const validate = () => {
-      const e = {};
-      if (!form.name.trim()) e.name = "이름을 입력해주세요";
-      if (!form.phone.trim()) e.phone = "전화번호를 입력해주세요";
-      else if (!/^[\d\-+\s]{9,15}$/.test(form.phone)) e.phone = "올바른 전화번호를 입력해주세요";
-      if (!form.email.trim()) e.email = "이메일을 입력해주세요";
-      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "올바른 이메일을 입력해주세요";
-      if (!form.password.trim()) e.password = "비밀번호를 입력해주세요";
-      else if (form.password.length < 8) e.password = "비밀번호는 8자 이상이어야 합니다";
-      if (!form.password2.trim()) e.password2 = "비밀번호 확인을 입력해주세요";
-      else if (form.password2.length < 8) e.password2 = "비밀번호는 8자 이상이어야 합니다";
-      else if (form.password !== form.password2) e.password2 = "비밀번호가 일치하지 않습니다";
-      return e;
-    };
-
-    const submit = async () => {
-      const e = validate();
-      if (Object.keys(e).length) { setErrs(e); return; }
-      
-      setLoading(true);
-      setToast("");
-      
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-            name: form.name,
-            phone: form.phone
-          })
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.message || "회원가입 실패");
-        }
-        
-        setDone(true);
-        setToast("회원가입이 완료되었습니다!");
-      } catch (error) {
-        console.error("회원가입 실패:", error);
-        setToast(error.message || "회원가입 중 오류가 발생했습니다");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <div style={{ maxWidth:500, margin:"0 auto", padding:"60px 20px" }}>
-        <h1 style={{ fontSize:34, color:G, fontWeight:"bold", marginBottom:6 }}>회원가입</h1>
-        <div style={{ width:56, height:4, background:GOLD, marginBottom:14, borderRadius:2 }}/>
-        <p style={{ color:"#777", marginBottom:36, fontSize:14 }}>회원이 되시면 제품 소식, 상담, 주문 서비스를 이용하실 수 있습니다.</p>
-        {done ? (
-          <div style={{ textAlign:"center", padding:"56px 20px", background:BG, borderRadius:16 }}>
-            <CheckCircle size={60} color={G} style={{ marginBottom:18 }}/>
-            <h2 style={{ fontSize:24, color:G, fontWeight:"bold", marginBottom:10 }}>가입이 완료되었습니다!</h2>
-            <p style={{ color:"#666", marginBottom:24, lineHeight:1.7 }}>NAC KOREA 회원이 되신 것을 환영합니다.<br/>빠른 시일 내에 연락드리겠습니다.</p>
-            <button onClick={() => { setDone(false); setForm({name:"",phone:"",email:"",password:"",password2:""}); go("home"); }}
-              style={{ background:G, border:"none", color:"white", padding:"11px 26px", borderRadius:8, cursor:"pointer", fontWeight:"bold", fontSize:14 }}>홈으로 돌아가기</button>
-          </div>
-        ) : (
-          <div style={{ background:"white", borderRadius:16, padding:32, boxShadow:"0 2px 20px rgba(0,0,0,0.07)" }}>
-            {/* 이름, 전화번호, 이메일 입력 필드 */}
-            {[{ k:"name", l:"이름", t:"text", ph:"홍길동" }, { k:"phone", l:"전화번호", t:"tel", ph:"010-0000-0000" }, { k:"email", l:"이메일", t:"email", ph:"example@email.com" }].map(f => (
-              <div key={f.k} style={{ marginBottom:22 }}>
-                <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>
-                  {f.l} <span style={{ color:"#d44" }}>*</span>
-                </label>
-                <input
-                  type={f.t}
-                  name={f.k}
-                  placeholder={f.ph}
-                  value={form[f.k]}
-                  onChange={e => {
-                    const { name, value } = e.target;
-                    setForm(prev => ({ ...prev, [name]: value }));
-                    setErrs(prev => ({ ...prev, [name]: "" }));
-                  }}
-                  style={{ width:"100%", padding:"11px 14px", border:`1.5px solid ${errs[f.k]?"#d44":"#ddd"}`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }}
-                />
-                {errs[f.k] && <p style={{ color:"#d44", fontSize:12, marginTop:5 }}>{errs[f.k]}</p>}
-              </div>
-            ))}
-            {/* 비밀번호 입력 필드 */}
-            <div style={{ marginBottom:22 }}>
-              <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>
-                비밀번호 <span style={{ color:"#d44" }}>*</span>
-              </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="비밀번호 (8자 이상)"
-                value={form.password}
-                onChange={e => {
-                  setForm(prev => ({ ...prev, password: e.target.value }));
-                  setErrs(prev => ({ ...prev, password: "" }));
-                }}
-                style={{ width:"100%", padding:"11px 14px", border:`1.5px solid ${errs.password?"#d44":"#ddd"}`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }}
-              />
-              {errs.password && <p style={{ color:"#d44", fontSize:12, marginTop:5 }}>{errs.password}</p>}
-            </div>
-            {/* 비밀번호 확인 입력 필드 */}
-            <div style={{ marginBottom:22 }}>
-              <label style={{ display:"block", fontWeight:"500", color:"#333", marginBottom:7, fontSize:14 }}>
-                비밀번호 확인 <span style={{ color:"#d44" }}>*</span>
-              </label>
-              <input
-                type="password"
-                name="password2"
-                placeholder="비밀번호 확인 (8자 이상)"
-                value={form.password2}
-                onChange={e => {
-                  setForm(prev => ({ ...prev, password2: e.target.value }));
-                  setErrs(prev => ({ ...prev, password2: "" }));
-                }}
-                style={{ width:"100%", padding:"11px 14px", border:`1.5px solid ${errs.password2?"#d44":"#ddd"}`, borderRadius:8, fontSize:15, outline:"none", background:"white", boxSizing:"border-box" }}
-              />
-              {errs.password2 && <p style={{ color:"#d44", fontSize:12, marginTop:5 }}>{errs.password2}</p>}
-            </div>
-            <div style={{ background:BG, borderRadius:8, padding:14, marginBottom:22, fontSize:13, color:"#666", lineHeight:1.65 }}>
-              ℹ️ 입력하신 정보는 회원 관리 목적으로만 사용되며 제3자에게 제공되지 않습니다.
-            </div>
-            <div style={{ background:"#fff8ec", border:`1px solid ${GOLD}44`, borderRadius:8, padding:14, marginBottom:22, fontSize:13, color:"#886" }}>
-              💳 추후 카드 결제 시스템 연동 예정 — 구매 편의성을 높여드리겠습니다.
-            </div>
-            <button onClick={submit} disabled={loading} style={{ width:"100%", background:G, border:"none", color:"white", padding:"14px", borderRadius:8, fontSize:16, fontWeight:"bold", cursor:"pointer", opacity:loading?0.7:1 }}>회원가입</button>
-            <Toast message={toast} onDone={() => setToast("")} />
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderPage = () => {
     if (page==="company") return <CompanyPage/>;
     if (page==="location") return <LocationPage/>;
     if (["pig","cattle","chicken"].includes(page)) return <ProductPage type={page}/>;
-    if (page==="register") return <RegisterPage/>;
-    if (page==="login") return <LoginPage/>;
+    if (page==="register") return <RegisterPage onNavigate={go}/>;
+    if (page==="login") return <LoginPage onLoginSuccess={onLoginSuccess} onNavigate={go} isLogin={isLogin}/>;
     if (page==="profile") return <ProfilePage/>;
     return <HomePage/>;
   };
@@ -685,7 +386,7 @@ const products = {
         input:focus{border-color:${G}!important;box-shadow:0 0 0 3px ${G}22!important}
       `}</style>
       <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", background:BG }}>
-        <Header/>
+        <Header nav={nav} currentPage={page} onNavigate={go} onLogout={handleLogout}/>
         <main style={{ flex:1 }}>{renderPage()}</main>
         <footer style={{ background:"#111", color:"#aaa", padding:"40px 20px 28px" }}>
           <div style={{ maxWidth:1100, margin:"0 auto" }}>
