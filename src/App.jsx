@@ -56,7 +56,7 @@ function App() {
       setToast("");
       console.log("로그인 시도:", form); // 디버그용 알림
       try {
-        const res = await fetch("http://127.0.0.1:8080/api/auth/login", {
+        const res = await fetch("http://localhost:8080/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: form.email, password: form.password })
@@ -83,7 +83,7 @@ function App() {
       setServerCheckLoading(true);
       setToast("");
       try {
-        const res = await fetch("http://127.0.0.1:8080/api/health/detail");
+        const res = await fetch("http://localhost:8080/api/health/detail");
         if (!res.ok) throw new Error(`서버 응답: ${res.status}`);
         const data = await res.json();
         console.log("서버 상태:", data);
@@ -123,7 +123,7 @@ function App() {
 
 
 const G = "#1a5f30", GL = "#227a3e", GD = "#124522", GOLD = "#d4880a", BG = "#f3f8f0";
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 const products = {
   pig: {
     icon: "🐷", title: "돼지 전용 사료 첨가제", col: "#c0570a",
@@ -200,7 +200,7 @@ const products = {
       return;
     }
     try {
-      const res = await axios.post("http://127.0.0.1:8080/api/auth/logout", {}, {
+      const res = await axios.post("http://localhost:8080/api/auth/logout", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 200) {
