@@ -56,7 +56,7 @@ function App() {
       setToast("");
       console.log("로그인 시도:", form); // 디버그용 알림
       try {
-        const res = await fetch("http://localhost:8080/api/auth/login", {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: form.email, password: form.password })
@@ -83,7 +83,7 @@ function App() {
       setServerCheckLoading(true);
       setToast("");
       try {
-        const res = await fetch("http://localhost:8080/api/health/detail");
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/health/detail`);
         if (!res.ok) throw new Error(`서버 응답: ${res.status}`);
         const data = await res.json();
         console.log("서버 상태:", data);
@@ -200,7 +200,7 @@ const products = {
       return;
     }
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/logout", {}, {
+      const res = await axios.post(`${API_BASE}/api/auth/logout`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.status === 200) {
