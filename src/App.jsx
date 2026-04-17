@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Menu, X, ChevronDown, MapPin, Phone } from "lucide-react";
 import axios from "axios";
 import { G, GL, GD, GOLD, BG, API_BASE } from "./constants/theme";
@@ -159,6 +159,40 @@ function App() {
   const [isLogin, setIsLogin] = useState(() => !!getValidToken());
 
   const go = (p) => setPage(p);
+
+  // Pull-to-refresh
+  const PULL_THRESHOLD = 80;
+  const touchStartY = useRef(0);
+  const pullYRef = useRef(0);
+  const [pullProgress, setPullProgress] = useState(0); // 0~1
+
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = (e) => {
+      if (!touchStartY.current) return;
+      const delta = e.touches[0].clientY - touchStartY.current;
+      if (delta > 0 && window.scrollY === 0) {
+        pullYRef.current = delta;
+        setPullProgress(Math.min(delta / PULL_THRESHOLD, 1));
+      }
+    };
+    const onTouchEnd = () => {
+      if (pullYRef.current >= PULL_THRESHOLD) window.location.reload();
+      touchStartY.current = 0;
+      pullYRef.current = 0;
+      setPullProgress(0);
+    };
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    return () => {
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, []);
 
   // 로그인 성공 콜백 — LoginPage에서 호출
   const onLoginSuccess = (accessToken, role) => {
@@ -408,7 +442,13 @@ function App() {
         @media(min-width:768px){.dsk{display:flex!important}.ham{display:none!important}}
         button:hover{opacity:0.88}
         input:focus{border-color:${G}!important;box-shadow:0 0 0 3px ${G}22!important}
+        @keyframes ptr-spin{to{transform:rotate(360deg)}}
       `}</style>
+      {pullProgress > 0 && (
+        <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999, display:"flex", justifyContent:"center", paddingTop: `${pullProgress * 48 - 40}px`, pointerEvents:"none" }}>
+          <div style={{ width:32, height:32, borderRadius:"50%", border:`3px solid ${G}`, borderTopColor:"transparent", animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none", transform: pullProgress < 1 ? `rotate(${pullProgress * 270}deg)` : "none", opacity: pullProgress, background:"white", boxShadow:"0 2px 8px rgba(0,0,0,0.15)" }} />
+        </div>
+      )}
       <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", background:BG }}>
         <Header nav={nav} currentPage={page} onNavigate={go} onLogout={handleLogout}/>
         <main style={{ flex:1 }}>{renderPage()}</main>
