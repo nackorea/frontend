@@ -162,25 +162,37 @@ function App() {
 
   // Pull-to-refresh
   const PULL_THRESHOLD = 80;
+  const isPulling = useRef(false);
   const touchStartY = useRef(0);
   const pullYRef = useRef(0);
   const [pullProgress, setPullProgress] = useState(0); // 0~1
 
   useEffect(() => {
     const onTouchStart = (e) => {
-      if (window.scrollY === 0) touchStartY.current = e.touches[0].clientY;
+      if (window.scrollY <= 0) {
+        isPulling.current = true;
+        touchStartY.current = e.touches[0].clientY;
+        pullYRef.current = 0;
+      }
     };
     const onTouchMove = (e) => {
-      if (!touchStartY.current) return;
+      if (!isPulling.current) return;
       const delta = e.touches[0].clientY - touchStartY.current;
-      if (delta > 0 && window.scrollY === 0) {
+      if (delta > 0) {
         pullYRef.current = delta;
         setPullProgress(Math.min(delta / PULL_THRESHOLD, 1));
+      } else {
+        // 위로 스크롤하면 취소
+        isPulling.current = false;
+        setPullProgress(0);
       }
     };
     const onTouchEnd = () => {
-      if (pullYRef.current >= PULL_THRESHOLD) window.location.reload();
-      touchStartY.current = 0;
+      if (pullYRef.current >= PULL_THRESHOLD) {
+        window.location.reload();
+        return;
+      }
+      isPulling.current = false;
       pullYRef.current = 0;
       setPullProgress(0);
     };
@@ -445,8 +457,8 @@ function App() {
         @keyframes ptr-spin{to{transform:rotate(360deg)}}
       `}</style>
       {pullProgress > 0 && (
-        <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999, display:"flex", justifyContent:"center", paddingTop: `${pullProgress * 48 - 40}px`, pointerEvents:"none" }}>
-          <div style={{ width:32, height:32, borderRadius:"50%", border:`3px solid ${G}`, borderTopColor:"transparent", animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none", transform: pullProgress < 1 ? `rotate(${pullProgress * 270}deg)` : "none", opacity: pullProgress, background:"white", boxShadow:"0 2px 8px rgba(0,0,0,0.15)" }} />
+        <div style={{ position:"fixed", top:0, left:0, right:0, zIndex:9999, display:"flex", justifyContent:"center", alignItems:"flex-start", transform:`translateY(${pullProgress * 60 - 44}px)`, pointerEvents:"none" }}>
+          <div style={{ width:32, height:32, borderRadius:"50%", border:`3px solid ${G}`, borderTopColor:"transparent", background:"white", boxShadow:"0 2px 8px rgba(0,0,0,0.18)", opacity: pullProgress, animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none", transform: pullProgress < 1 ? `rotate(${pullProgress * 270}deg)` : undefined }} />
         </div>
       )}
       <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", background:BG }}>
