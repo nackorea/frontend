@@ -179,10 +179,10 @@ function App() {
       if (!isPulling.current) return;
       const delta = e.touches[0].clientY - touchStartY.current;
       if (delta > 0) {
+        e.preventDefault(); // 브라우저 기본 PTR / iOS 러버밴드 차단
         pullYRef.current = delta;
         setPullProgress(Math.min(delta / PULL_THRESHOLD, 1));
       } else {
-        // 위로 스크롤하면 취소
         isPulling.current = false;
         setPullProgress(0);
       }
@@ -197,7 +197,7 @@ function App() {
       setPullProgress(0);
     };
     window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false }); // preventDefault 사용을 위해 non-passive
     window.addEventListener("touchend", onTouchEnd);
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
@@ -448,6 +448,7 @@ function App() {
   return (
     <>
       <style>{`
+        html{overscroll-behavior-y:none}
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
         .dsk{display:none!important}
         .ham{display:flex!important}
