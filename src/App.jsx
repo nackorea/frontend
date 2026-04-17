@@ -196,13 +196,14 @@ function App() {
       pullYRef.current = 0;
       setPullProgress(0);
     };
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false }); // preventDefault 사용을 위해 non-passive
-    window.addEventListener("touchend", onTouchEnd);
+    // iOS Safari: document에 등록해야 preventDefault()가 스크롤 결정 전에 실행됨
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd);
     return () => {
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
     };
   }, []);
 
@@ -448,7 +449,7 @@ function App() {
   return (
     <>
       <style>{`
-        html{overscroll-behavior-y:none}
+        html,body{overscroll-behavior-y:none;-webkit-overflow-scrolling:auto}
         *{margin:0;padding:0;box-sizing:border-box;font-family:'Malgun Gothic','Apple SD Gothic Neo','Noto Sans KR',sans-serif}
         .dsk{display:none!important}
         .ham{display:flex!important}
