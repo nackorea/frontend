@@ -65,7 +65,7 @@ function Header({ nav, currentPage, onNavigate, onLogout }) {
     <header style={{ background: G, position: "sticky", top: 0, zIndex: 1000, boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-          <div onClick={() => handleNavClick("home")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+          <div onClick={() => window.location.reload()} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 38, height: 38, background: GOLD, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 12, color: G, letterSpacing: -0.5 }}>NAC</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <div>
