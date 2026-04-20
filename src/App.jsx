@@ -168,27 +168,49 @@ function App() {
   const [pullProgress, setPullProgress] = useState(0); // 0~1
 
   useEffect(() => {
-    const onTouchStart = (e) => {
-      if (window.scrollY <= 0) {
-        isPulling.current = true;
-        touchStartY.current = e.touches[0].clientY;
-        pullYRef.current = 0;
-      }
+    // iOS Safari는 서브픽셀 렌더링으로 최상단에서도 scrollY가 0.5 등 양수를 반환할 수 있음
+    // window.scrollY, pageYOffset, scrollingElement.scrollTop 순으로 fallback
+    const getScrollTop = () => {
+      if (typeof window.scrollY === "number") return window.scrollY;
+      if (typeof window.pageYOffset === "number") return window.pageYOffset;
+      return (document.documentElement.scrollTop || document.body.scrollTop || 0);
     };
+
+    const onTouchStart = (e) => {
+      // 스크롤 위치와 무관하게 항상 시작 좌표 기록
+      // (스크롤 위치 판단은 touchmove에서 동적으로 수행)
+      touchStartY.current = e.touches[0].clientY;
+      isPulling.current = false;
+      pullYRef.current = 0;
+    };
+
     const onTouchMove = (e) => {
-      if (!isPulling.current) return;
+      const scrollTop = getScrollTop();
       const delta = e.touches[0].clientY - touchStartY.current;
-      if (delta > 0) {
-        e.preventDefault(); // 브라우저 기본 PTR / iOS 러버밴드 차단
+
+      if (scrollTop <= 1 && delta > 0) {
+        // 최상단(서브픽셀 오차 1px 허용)에서 아래로 드래그 → PTR 활성화
+        e.preventDefault(); // iOS 러버밴드 / 네이티브 PTR 차단
+        isPulling.current = true;
         pullYRef.current = delta;
         setPullProgress(Math.min(delta / PULL_THRESHOLD, 1));
-      } else {
-        isPulling.current = false;
-        setPullProgress(0);
+      } else if (isPulling.current) {
+        if (delta <= 0) {
+          // 위로 되돌아가면 PTR 취소
+          isPulling.current = false;
+          pullYRef.current = 0;
+          setPullProgress(0);
+        } else {
+          // 계속 아래로 드래그 중 — 반드시 preventDefault 유지
+          e.preventDefault();
+          pullYRef.current = delta;
+          setPullProgress(Math.min(delta / PULL_THRESHOLD, 1));
+        }
       }
     };
+
     const onTouchEnd = () => {
-      if (pullYRef.current >= PULL_THRESHOLD) {
+      if (isPulling.current && pullYRef.current >= PULL_THRESHOLD) {
         window.location.reload();
         return;
       }
@@ -196,10 +218,12 @@ function App() {
       pullYRef.current = 0;
       setPullProgress(0);
     };
-    // iOS Safari: document에 등록해야 preventDefault()가 스크롤 결정 전에 실행됨
+
+    // touchstart: passive:true — 클릭 응답성 유지 (여기선 preventDefault 불필요)
+    // touchmove: passive:false — e.preventDefault()로 iOS 스크롤/러버밴드 차단 필수
     document.addEventListener("touchstart", onTouchStart, { passive: true });
     document.addEventListener("touchmove", onTouchMove, { passive: false });
-    document.addEventListener("touchend", onTouchEnd);
+    document.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
       document.removeEventListener("touchstart", onTouchStart);
       document.removeEventListener("touchmove", onTouchMove);
@@ -209,9 +233,10 @@ function App() {
 
   // 로그인 성공 콜백 — LoginPage에서 호출
   const onLoginSuccess = (accessToken, role) => {
-    localStorage.setItem("token", accessToken);
+    const cleanToken = accessToken?.trim() ?? "";
+    localStorage.setItem("token", cleanToken);
     localStorage.setItem("role", role);
-    setToken(accessToken);
+    setToken(cleanToken);
     setIsLogin(true);
     go("home");
   };
