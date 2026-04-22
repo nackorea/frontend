@@ -174,29 +174,37 @@ function App() {
         @media(min-width:768px){.dsk{display:flex!important}.ham{display:none!important}}
         button:hover{opacity:0.88}
         input:focus{border-color:${G}!important;box-shadow:0 0 0 3px ${G}22!important}
-        @keyframes ptr-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        @keyframes ptr-spin-delay1{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        @keyframes ptr-spin-delay2{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        @keyframes ptr-pop{0%{transform:scale(0.5) rotate(0deg)}100%{transform:scale(1) rotate(${(p)=>p*270}deg)}}
+        @keyframes ptr-orbit{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        @keyframes ptr-counter{0%{transform:rotate(0deg)}100%{transform:rotate(-360deg)}}
       `}</style>
       {pullProgress > 0 && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "flex-start", transform: `translateY(${Math.min(pullProgress * 70 - 10, 56)}px)`, pointerEvents: "none", gap: 8 }}>
-          {["🐄", "🐔", "🐷"].map((icon, i) => (
-            <div key={i} style={{
-              fontSize: 30 + pullProgress * 8,
-              opacity: Math.min(pullProgress * 2, 1),
-              filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.15))`,
-              display: "inline-block",
-              transform: pullProgress >= 1
-                ? undefined
-                : `rotate(${pullProgress * 270}deg) scale(${0.5 + pullProgress * 0.5})`,
-              animation: pullProgress >= 1
-                ? `ptr-spin ${0.6 + i * 0.1}s linear ${i * 0.08}s infinite`
-                : "none",
-            }}>
-              {icon}
-            </div>
-          ))}
+        <div style={{
+          position: "fixed", top: 0, left: "50%", zIndex: 9999,
+          transform: `translateX(-50%) translateY(${Math.min(pullProgress * 70 - 10, 60)}px)`,
+          pointerEvents: "none",
+          width: 64, height: 64,
+          opacity: Math.min(pullProgress * 2, 1),
+          animation: pullProgress >= 1 ? "ptr-orbit 1s linear infinite" : "none",
+          rotate: pullProgress < 1 ? `${pullProgress * 270}deg` : undefined,
+        }}>
+          {["🐄", "🐔", "🐷"].map((icon, i) => {
+            const angle = (i * 120 - 90) * (Math.PI / 180);
+            const r = 22;
+            const x = 32 + r * Math.cos(angle);
+            const y = 32 + r * Math.sin(angle);
+            return (
+              <div key={i} style={{
+                position: "absolute",
+                left: x, top: y,
+                transform: "translate(-50%,-50%)",
+                fontSize: 18,
+                filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.18))",
+                animation: pullProgress >= 1 ? "ptr-counter 1s linear infinite" : "none",
+              }}>
+                {icon}
+              </div>
+            );
+          })}
         </div>
       )}
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f3f8f0" }}>
