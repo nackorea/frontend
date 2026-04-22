@@ -4,7 +4,7 @@ import { G, GOLD, API_BASE } from "./constants/theme";
 import Header from "./components/common/Header";
 import HomePage from "./pages/HomePage";
 import CompanyPage from "./pages/CompanyPage";
-import NackoreaisPage from "./pages/NackoreaisPage";
+import PressPage from "./pages/PressPage";
 import LocationPage from "./pages/LocationPage";
 import ProductPage from "./pages/ProductPage";
 import LoginPage from "./pages/LoginPage";
@@ -112,7 +112,7 @@ function App() {
     {
       id: "co", label: "회사소개", sub: [
         { id: "company", label: "회사소개" },
-        { id: "nackorea", label: "nackorea는" },
+        { id: "press", label: "보도자료" },
         { id: "location", label: "회사위치" },
       ],
     },
@@ -157,7 +157,7 @@ function App() {
 
   const renderPage = () => {
     if (page === "company") return <CompanyPage />;
-    if (page === "nackorea") return <NackoreaisPage />;
+    if (page === "press") return <PressPage />;
     if (page === "location") return <LocationPage />;
     if (["pig", "cattle", "chicken"].includes(page)) return <ProductPage type={page} onNavigate={go} />;
     if (page === "register") return <RegisterPage onNavigate={go} />;

@@ -1,9 +1,9 @@
 import { G, GL, GOLD, BG } from "../constants/theme";
 
-function NackoreaisPage() {
+function PressPage() {
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "60px 20px" }}>
-      <h1 style={{ fontSize: 34, color: G, fontWeight: "bold", marginBottom: 6 }}>nackorea는</h1>
+      <h1 style={{ fontSize: 34, color: G, fontWeight: "bold", marginBottom: 6 }}>보도자료</h1>
       <div style={{ width: 56, height: 4, background: GOLD, marginBottom: 40, borderRadius: 2 }} />
 
       <div style={{ marginBottom: 44, borderRadius: 14, overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.12)" }}>
@@ -64,4 +64,4 @@ function NackoreaisPage() {
   );
 }
 
-export default NackoreaisPage;
+export default PressPage;
