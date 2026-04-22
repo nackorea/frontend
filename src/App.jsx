@@ -180,18 +180,24 @@ function App() {
       `}</style>
       {pullProgress > 0 && (
         <div style={{
-          position: "fixed", top: 0, left: "50%", zIndex: 9999,
-          transform: pullProgress >= 1
-            ? `translateX(-50%) translateY(${Math.min(pullProgress * 70 - 10, 60)}px)`
-            : `translateX(-50%) translateY(${Math.min(pullProgress * 70 - 10, 60)}px) rotate(${pullProgress * 270}deg) scale(${0.5 + pullProgress * 0.5})`,
+          position: "fixed",
+          top: Math.min(pullProgress * 72 - 20, 48),
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 9999,
           pointerEvents: "none",
-          opacity: Math.min(pullProgress * 2, 1),
-          fontSize: 28,
-          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))",
-          display: "inline-block",
-          animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none",
+          opacity: Math.min(pullProgress * 2.5, 1),
+          transition: pullProgress >= 1 ? "top 0.18s ease-out" : "none",
         }}>
-          {pullIcon}
+          <span style={{
+            fontSize: 30,
+            display: "inline-block",
+            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.15))",
+            transform: `scale(${Math.min(0.5 + pullProgress * 0.6, 1)})`,
+            animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none",
+          }}>
+            {pullIcon}
+          </span>
         </div>
       )}
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f3f8f0" }}>
