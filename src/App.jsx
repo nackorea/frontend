@@ -174,11 +174,26 @@ function App() {
         @media(min-width:768px){.dsk{display:flex!important}.ham{display:none!important}}
         button:hover{opacity:0.88}
         input:focus{border-color:${G}!important;box-shadow:0 0 0 3px ${G}22!important}
-        @keyframes ptr-spin{to{transform:rotate(360deg)}}
+        @keyframes ptr-bounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.15)}}
+        @keyframes ptr-shake{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
+        @keyframes ptr-pop{0%{transform:scale(0.6)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
       `}</style>
       {pullProgress > 0 && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "flex-start", transform: `translateY(${pullProgress * 60 - 44}px)`, pointerEvents: "none" }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", border: `3px solid ${G}`, borderTopColor: "transparent", background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.18)", opacity: pullProgress, animation: pullProgress >= 1 ? "ptr-spin 0.7s linear infinite" : "none", transform: pullProgress < 1 ? `rotate(${pullProgress * 270}deg)` : undefined }} />
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, display: "flex", justifyContent: "center", alignItems: "flex-start", transform: `translateY(${Math.min(pullProgress * 70 - 10, 56)}px)`, pointerEvents: "none", gap: 6 }}>
+          {["🐔", "🐷"].map((icon, i) => (
+            <div key={i} style={{
+              fontSize: 32 + pullProgress * 8,
+              opacity: pullProgress,
+              filter: `drop-shadow(0 2px 6px rgba(0,0,0,0.18))`,
+              animation: pullProgress >= 1
+                ? `ptr-bounce 0.55s ease-in-out ${i * 0.15}s infinite`
+                : `ptr-pop 0.25s ease-out`,
+              display: "inline-block",
+              transformOrigin: "bottom center",
+            }}>
+              {icon}
+            </div>
+          ))}
         </div>
       )}
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f3f8f0" }}>
