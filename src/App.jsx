@@ -37,7 +37,7 @@ function App() {
   const go = (p) => setPage(p);
 
   // Pull-to-refresh
-  const PULL_THRESHOLD = 500;
+  const PULL_THRESHOLD = 200;
   const isPulling = useRef(false);
   const touchStartY = useRef(0);
   const pullYRef = useRef(0);
